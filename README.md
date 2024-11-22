@@ -19,35 +19,92 @@ az group create --name ondata-prd --location eastus
 
 
 ```bash
-az vm create 
-  --resource-group ondata-prd 
-  --name vm01-ondata-prd 
-  --image UbuntuLTS 
-  --size Standard_DS2_v2 
-  --admin-username jhanalytics 
-  --admin-password Jhanalytics123 
-  --authentication-type password
-  --storage-sku Standard_LRS 
-  --os-disk-size-gb 30 
-  --custom-data cloud-init.txt 
-  --public-ip-sku Standard 
+az vm create \
+  --resource-group rg-sufradev-prd \
+  --name vm-sufradev-linux-back-prd \
+  --image UbuntuLTS \
+  --size Standard_DS2_v2 \
+  --admin-username admsufra \
+  --admin-password sufra123@2024 \
+  --authentication-type password \
+  --storage-sku Standard_LRS \
+  --os-disk-size-gb 30 \
+  --custom-data cloud-init.txt \
+  --public-ip-sku Standard \
   --tags Environment=Production
 ```
 
-### 🔓 3. Abrir as portas para SSH (22), HTTP (80) e HTTPS (443)
-
 ```bash
-az vm open-port --port 22 --resource-group ondata-prd --name vm01-ondata-prd
-az vm open-port --port 80 --resource-group ondata-prd --name vm01-ondata-prd
-az vm open-port --port 443 --resource-group ondata-prd --name vm01-ondata-prd
+az vm create \
+  --resource-group rg-sufradev-prd \
+  --name vm-sufradev-windowsserver-front-prd \
+  --image MicrosoftWindowsServer:windows-server:2022-datacenter-azure-edition:latest \
+  --size Standard_D2s_v5 \
+  --admin-username adm-sufra \
+  --admin-password sufra123@2024 \
+  --public-ip-sku Standard \
+  --os-disk-size-gb 128 \
+  --authentication-type password
+
 ```
 
-### 🚪 Habilitando todas as portas na VM
+```bash
+ssh admsufra@191.233.254.131
+sufra123@2024
+```
+
+
+
+
 
 ```bash
-az network nsg rule create --resource-group ondata-prd --nsg-name vm01-ondata-prd-nsg --name AllowInboundPorts --priority 100 --direction Inbound --access Allow --protocol '*' --source-address-prefix '*' --destination-port-range '*'
-az network nsg rule create --resource-group ondata-prd --nsg-name vm01-ondata-prd-nsg --name AllowOutboundPorts --priority 101 --direction Outbound --access Allow --protocol '*' --source-address-prefix '*' --destination-port-range '*'
+az vm open-port --port 80-100 --resource-group rg-sufradev-prd --name vm-sufradev-windowsserver-front-prd
+az vm open-port --port 8080 --resource-group rg-sufradev-prd --name vm-sufradev-linux-back-prd
+az vm open-port --port 22 --resource-group rg-sufradev-prd --name vm-sufradev-linux-back-prd
+az vm open-port --port 443 --resource-group rg-sufradev-prd --name vm-sufradev-linux-back-prd
+
 ```
+
+
+
+
+```bash
+sudo apt update && sudo apt install openjdk-17-jdk -y
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 export PATH=$JAVA_HOME/bin:$PATH
+java -version
+```
+
+
+
+```bash
+sudo apt install gradle
+gradle wrapper
+chmod +x ./gradlew
+./gradlew wrapper --gradle-version 8.0
+./gradlew clean build
+
+```
+
+
+
+```bash
+cd /home/admsufra
+git clone https://github.com/eduardofuncao/suffra-backend.git
+cd suffra-backend
+```
+
+
+
+```bash
+cd /home/admsufra/sufrajava/suffra-backend
+ ./gradlew clean build
+./gradlew bootRun
+
+cd /home/admsufra/sufrajava/suffra-backend/build/libs
+java -jar build/libs/suffra-0.0.1-SNAPSHOT.jar
+```
+
+
 
 ### 🔐 Acesso à VM
 
@@ -55,6 +112,7 @@ az network nsg rule create --resource-group ondata-prd --nsg-name vm01-ondata-pr
 ssh jhanalytics@191.232.243.129
 # Senha: Jhanalytics123
 ```
+
 
 
 ## 🐳 Instalação do Docker e Docker Compose
